@@ -80,7 +80,7 @@ const TIMETABLE_DATA = [
     start: "14:20",
     end: "15:10",
     days: {
-      Monday: { text: "DSA D-101", type: "class" },
+      Monday: { text: "DSA D-103", type: "class" },
       Tuesday: { text: "DBMS B-220", type: "class" },
       Wednesday: { text: "Coding B-220", type: "class" },
       Thursday: { text: "", type: "empty" },
@@ -92,7 +92,7 @@ const TIMETABLE_DATA = [
     start: "15:10",
     end: "16:00",
     days: {
-      Monday: { text: "DSA D-101", type: "class" },
+      Monday: { text: "DSA D-103", type: "class" },
       Tuesday: { text: "Verbal B-208", type: "class" },
       Wednesday: { text: "Coding B-220", type: "class" },
       Thursday: { text: "DSA B-220", type: "class" },
