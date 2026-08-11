@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Analytics } from "@vercel/analytics/react"
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
@@ -204,6 +205,7 @@ export default function Timetable() {
           ))}
         </tbody>
       </table>
+      <Analytics />
     </div>
   );
 }
