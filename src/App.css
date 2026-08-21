@@ -303,7 +303,7 @@ body{
   transition:background .15s;
 }
 .stat-card:hover{background:var(--surface2);}
-.stat-icon{color:var(--text3);}
+.stat-icon{color:var(--text3);display:flex;align-items:center;height:14px;}
 .stat-lbl{font-size:9px;font-weight:700;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;}
 .stat-val{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.02em;line-height:1.1;}
 

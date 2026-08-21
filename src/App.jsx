@@ -3,7 +3,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft, ChevronRight, LayoutGrid, AlignJustify,
-  Sun, Moon, Monitor, Utensils, ArrowRight,
+  Sun, Moon, Monitor, Utensils, ArrowRight, CircleDot,
   BookOpen, Clock, Search, Plus, PencilLine, Trash2, Check,
 } from "lucide-react";
 import "./App.css";
@@ -354,7 +354,7 @@ export default function App() {
               {[
                 {icon:<BookOpen size={11}/>, lbl:"CLASSES",    val:stats.cls},
                 {icon:<Clock size={11}/>,    lbl:"CLASS TIME", val:fmtMins(stats.mins)},
-                {icon:<span style={{fontSize:11}}>⊙</span>, lbl:"FREE", val:stats.free>0?`${stats.free} slot${stats.free>1?"s":""}` :"None"},
+                {icon:<CircleDot size={11}/>, lbl:"FREE", val:stats.free>0?`${stats.free} slot${stats.free>1?"s":""}` :"None"},
                 {icon:<Utensils size={11}/>, lbl:"LUNCH",      val:stats.lunch||"—"},
               ].map(s => (
                 <div key={s.lbl} className="stat-card">
