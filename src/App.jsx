@@ -12,7 +12,33 @@ import { toMinutes, getCurrentTimeMinutes } from "./lib/time.js";
 import { getNowState, getDaySchedule } from "./lib/schedule.js";
 
 /* ─── helpers ─────────────────────────────────────────────────── */
-const greet = (h) => h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+const GREETINGS = {
+  morning: [
+    "Rise and shine",
+    "Oh look, you're awake",
+    "Morning, legend",
+    "Another day, another caffeine IV",
+    "You're up early. Suspicious",
+  ],
+  afternoon: [
+    "Still going strong",
+    "Half the day's gone. Panic later",
+    "Afternoon energy loading…",
+    "You survived the morning. Impressive",
+    "It's giving 'functioning adult'",
+  ],
+  evening: [
+    "Burning the midnight oil already?",
+    "The grind never sleeps, apparently",
+    "Evening, you beautiful disaster",
+    "Still here? Respect.",
+    "Clocking in after hours. Classic",
+  ],
+};
+const greet = (h) => {
+  const pool = h < 12 ? GREETINGS.morning : h < 17 ? GREETINGS.afternoon : GREETINGS.evening;
+  return pool[Math.floor(Date.now() / 60000) % pool.length];
+};
 const fmtMins = (t) => { const h = Math.floor(t/60), m = t%60; return m ? `${h}h ${m}m` : `${h}h`; };
 const fmt12 = (m) => { const h=Math.floor(m/60), mm=m%60, hh=h>12?h-12:h||12, ap=h>=12?"PM":"AM"; return `${hh}:${mm.toString().padStart(2,"0")} ${ap}`; };
 
@@ -58,14 +84,16 @@ function resolveTheme(mode) {
 
 /* ─── MAIN APP ─────────────────────────────────────────────────── */
 export default function App() {
-  const [now, setNow]         = useState(new Date());
+  const [now, setNow]         = useState(() => new Date());
   const [tt, setTt]           = useState(DEFAULT_SESSIONS);
   const [view, setView]       = useState("week");
-  const [dayIdx, setDayIdx]   = useState(() => { const d = new Date().getDay() - 1; return d >= 0 && d <= 4 ? d : 0; });
+  // dayIdx = the day the user is BROWSING (0=Mon … 4=Fri).
+  // Initialise to real today's weekday; clamp to Friday on weekends.
+  const [dayIdx, setDayIdx]   = useState(() => { const d = new Date().getDay() - 1; return d >= 0 && d <= 4 ? d : 4; });
   const [weekOffset, setWeekOffset] = useState(0);
   const [theme, setTheme]     = useState(() => localStorage.getItem("tt_theme") || "dark");
-  const [calY, setCalY]       = useState(new Date().getFullYear());
-  const [calM, setCalM]       = useState(new Date().getMonth());
+  const [calY, setCalY]       = useState(() => new Date().getFullYear());
+  const [calM, setCalM]       = useState(() => new Date().getMonth());
   const [sel, setSel]         = useState(null);
   const [todos, setTodos]     = useState(() => { try { return JSON.parse(localStorage.getItem("tt_todos") || "[]"); } catch { return []; } });
   const [todoInput, setTodoInput] = useState("");
@@ -73,6 +101,8 @@ export default function App() {
   const [schedEdit, setSchedEdit] = useState(null); // {si, dayName}
   const dlg = useRef(null);
   const schedDlg = useRef(null);
+  // Track the last known date-string so midnight detection only fires on genuine day changes.
+  const prevDateStrRef = useRef(new Date().toDateString());
 
   /* theme */
   useEffect(() => {
@@ -90,7 +120,24 @@ export default function App() {
   useEffect(() => { const s = localStorage.getItem("smartTimetable"); if (s) { try { setTt(JSON.parse(s)); } catch {} } }, []);
   useEffect(() => { localStorage.setItem("smartTimetable", JSON.stringify(tt)); }, [tt]);
   useEffect(() => { localStorage.setItem("tt_todos", JSON.stringify(todos)); }, [todos]);
-  useEffect(() => { const id = setInterval(() => setNow(new Date()), 30000); return () => clearInterval(id); }, []);
+  // Clock ticks every 60 s so nowMins stays accurate.
+  useEffect(() => { const id = setInterval(() => setNow(new Date()), 60000); return () => clearInterval(id); }, []);
+
+  /* midnight / day-change detection
+     Runs on every now-tick, but resets the UI only when the calendar DATE
+     actually changes (not on the initial mount — that would clobber the
+     correct initial dayIdx derived from the useState initialiser above). */
+  useEffect(() => {
+    const newDateStr = now.toDateString();
+    if (newDateStr === prevDateStrRef.current) return; // same day — do nothing
+    prevDateStrRef.current = newDateStr;
+    // Genuine day change: jump to new today
+    const d = now.getDay() - 1; // -1=Sun, 0-4=Mon-Fri, 5=Sat
+    setDayIdx(d >= 0 && d <= 4 ? d : 4);
+    setWeekOffset(0);
+    setCalY(now.getFullYear());
+    setCalM(now.getMonth());
+  }, [now]);
 
   /* keyboard */
   useEffect(() => {
@@ -107,11 +154,19 @@ export default function App() {
   }, []);
 
   /* derived */
+  // todayIdx: real current weekday index (-1=Sun, 0-4=Mon-Fri, 5=Sat)
   const todayIdx  = now.getDay() - 1;
   const nowMins   = getCurrentTimeMinutes(now);
+  // nowState always based on the REAL today
   const nowState  = getNowState(nowMins, todayIdx, tt, DAYS);
   const weekDates = getWeekDates(weekOffset);
+  // stats for the BROWSED day (timetable/day strip)
   const stats     = getDayStats(dayIdx, tt);
+  // todayStats for At-a-Glance, Done-for-Today (always real today)
+  const todayStats = todayIdx >= 0 && todayIdx <= 4 ? getDayStats(todayIdx, tt) : { cls: 0, mins: 0, lunch: null, free: 0 };
+  // actual day name including weekends
+  const ALL_DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  const todayDayName = ALL_DAYS[now.getDay()];
   const calDays   = buildCal(calY, calM);
 
   /* month label for the day strip */
@@ -122,15 +177,23 @@ export default function App() {
     return `${MONTH_NAMES[first.getMonth()].slice(0,3)} – ${MONTH_NAMES[last.getMonth()].slice(0,3)} ${last.getFullYear()}`;
   })();
 
-  /* up next */
+  /* up next — always calculated from REAL today */
   const upNext = (() => {
-    const idx = todayIdx >= 0 && todayIdx <= 4 ? todayIdx : dayIdx;
-    const sc = getDaySchedule(idx, tt, DAYS);
-    const nx = sc.find(b => b.start > nowMins && b.type !== "lunch");
-    if (nx) return { block: nx, tomorrow: false };
-    const ti = (idx + 1) % 5, ts = getDaySchedule(ti, tt, DAYS);
-    const n = ts.find(b => b.type !== "lunch");
-    return n ? { block: n, tomorrow: true } : null;
+    const isWeekday = todayIdx >= 0 && todayIdx <= 4;
+    if (isWeekday) {
+      const sc = getDaySchedule(todayIdx, tt, DAYS);
+      const nx = sc.find(b => b.start > nowMins && b.type !== "lunch");
+      if (nx) return { block: nx, tomorrow: false };
+    }
+    // No more classes today or weekend: find next weekday with classes
+    const startIdx = isWeekday ? (todayIdx + 1) % 5 : 0; // Mon if weekend
+    for (let i = 0; i < 5; i++) {
+      const ni = (startIdx + i) % 5;
+      const ns = getDaySchedule(ni, tt, DAYS);
+      const n = ns.find(b => b.type !== "lunch");
+      if (n) return { block: n, tomorrow: true };
+    }
+    return null;
   })();
 
   const nextClassId = upNext && !upNext.tomorrow ? upNext.block.id : null;
@@ -215,7 +278,8 @@ export default function App() {
               <div
                 key={i}
                 className={`cal-day ${d ? "cal-day-valid" : ""} ${isToday ? "cal-day-today" : ""} ${isSelected && !isToday ? "cal-day-selected" : ""} ${isWeekend && d ? "cal-day-weekend" : ""}`}
-                onClick={() => handleCalDayClick(d)}
+                onClick={() => !isWeekend && handleCalDayClick(d)}
+                style={isWeekend && d ? { pointerEvents: "none" } : {}}
               >
                 {d || ""}
               </div>
@@ -315,7 +379,9 @@ export default function App() {
                 {nowState.type === "after" || nowState.type === "weekend" ? <>
                   <p className="now-label">DONE FOR TODAY</p>
                   <h2 className="now-main">That's a wrap</h2>
-                  <p className="now-sub">{stats.cls} classes, {fmtMins(stats.mins)} of teaching. Nothing left on {DAYS[dayIdx]}.</p>
+                  {nowState.type === "weekend"
+                    ? <p className="now-sub">No classes scheduled today. Enjoy your day off!</p>
+                    : <p className="now-sub">{todayStats.cls} classes, {fmtMins(todayStats.mins)} of teaching. All done for {todayDayName}!</p>}
                 </> : nowState.type === "active" ? <>
                   <p className="now-label">NOW IN SESSION</p>
                   <h2 className="now-main">{nowState.current.text.split(" ")[0]}</h2>
@@ -336,7 +402,7 @@ export default function App() {
                 {upNext ? <>
                   <p className="now-next-name">{upNext.block.text.split(" ")[0]}</p>
                   {upNext.tomorrow
-                    ? <p className="now-tomorrow">Tomorrow at {fmt12(upNext.block.start)}</p>
+                    ? <p className="now-tomorrow">📅 Tomorrow · {fmt12(upNext.block.start)}</p>
                     : <div className="now-next-chip" style={{borderColor:subjectColor(upNext.block.text)+"55",background:subjectColor(upNext.block.text)+"18"}}>
                         <div className="now-dot" style={{background:subjectColor(upNext.block.text)}}/>
                         <span style={{color:subjectColor(upNext.block.text)}}>{upNext.block.text.split(" ").slice(1).join(" ")}</span>
@@ -347,15 +413,15 @@ export default function App() {
             </motion.div>
           </AnimatePresence>
 
-          {/* At a Glance */}
+          {/* At a Glance — always uses REAL today, not the browsed date */}
           <div>
-            <p className="section-lbl">{DAYS[dayIdx]?.toUpperCase()} AT A GLANCE</p>
+            <p className="section-lbl">{todayDayName.toUpperCase()} AT A GLANCE</p>
             <div className="stats-grid">
               {[
-                {icon:<BookOpen size={11}/>, lbl:"CLASSES",    val:stats.cls},
-                {icon:<Clock size={11}/>,    lbl:"CLASS TIME", val:fmtMins(stats.mins)},
-                {icon:<CircleDot size={11}/>, lbl:"FREE", val:stats.free>0?`${stats.free} slot${stats.free>1?"s":""}` :"None"},
-                {icon:<Utensils size={11}/>, lbl:"LUNCH",      val:stats.lunch||"—"},
+                {icon:<BookOpen size={11}/>, lbl:"CLASSES",    val:todayStats.cls},
+                {icon:<Clock size={11}/>,    lbl:"CLASS TIME", val:todayStats.mins > 0 ? fmtMins(todayStats.mins) : "—"},
+                {icon:<CircleDot size={11}/>, lbl:"FREE", val:todayStats.free > 0 ? `${todayStats.free} slot${todayStats.free > 1 ? "s" : ""}` : "None"},
+                {icon:<Utensils size={11}/>, lbl:"LUNCH",      val:todayStats.lunch||"—"},
               ].map(s => (
                 <div key={s.lbl} className="stat-card">
                   <div className="stat-icon">{s.icon}</div>
