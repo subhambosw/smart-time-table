@@ -88,9 +88,17 @@ export default function App() {
   const [tt, setTt]           = useState(DEFAULT_SESSIONS);
   const [view, setView]       = useState("week");
   // dayIdx = the day the user is BROWSING (0=Mon … 4=Fri).
-  // Initialise to real today's weekday; clamp to Friday on weekends.
-  const [dayIdx, setDayIdx]   = useState(() => { const d = new Date().getDay() - 1; return d >= 0 && d <= 4 ? d : 4; });
-  const [weekOffset, setWeekOffset] = useState(0);
+  // On a weekday: use today's weekday index.
+  // On a weekend: default to Monday (0) of the NEXT week.
+  const [dayIdx, setDayIdx]   = useState(() => {
+    const d = new Date().getDay() - 1; // -1=Sun, 0-4=Mon-Fri, 5=Sat
+    return d >= 0 && d <= 4 ? d : 0;   // weekend → upcoming Monday
+  });
+  // weekOffset: 0 for weekdays (current week), 1 for weekends (upcoming week).
+  const [weekOffset, setWeekOffset] = useState(() => {
+    const dow = new Date().getDay(); // 0=Sun, 6=Sat
+    return (dow === 0 || dow === 6) ? 1 : 0;
+  });
   const [theme, setTheme]     = useState(() => localStorage.getItem("tt_theme") || "dark");
   const [sel, setSel]         = useState(null);
   const [schedEdit, setSchedEdit] = useState(null); // {si, dayName}
@@ -126,9 +134,10 @@ export default function App() {
     if (newDateStr === prevDateStrRef.current) return; // same day — do nothing
     prevDateStrRef.current = newDateStr;
     // Genuine day change: jump to new today
-    const d = now.getDay() - 1; // -1=Sun, 0-4=Mon-Fri, 5=Sat
-    setDayIdx(d >= 0 && d <= 4 ? d : 4);
-    setWeekOffset(0);
+    const d   = now.getDay() - 1; // -1=Sun, 0-4=Mon-Fri, 5=Sat
+    const isWeekend = d < 0 || d > 4;
+    setDayIdx(isWeekend ? 0 : d);         // weekend → upcoming Monday
+    setWeekOffset(isWeekend ? 1 : 0);     // weekend → next week
   }, [now]);
 
   /* keyboard */
