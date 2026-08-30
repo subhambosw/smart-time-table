@@ -385,7 +385,13 @@ export default function App() {
                           <div key={dayName} className="grid-cell">
                             <div
                               className={`block-card ${isDone ? "block-done" : ""} ${isNext ? "block-next" : ""}`}
-                              style={{borderLeftColor: col}}
+                              style={{
+                                borderLeftColor: col,
+                                background: isNext ? undefined : col + "18",
+                                borderTopColor: col + "30",
+                                borderRightColor: col + "30",
+                                borderBottomColor: col + "30",
+                              }}
                               onClick={() => openEdit({start:slotStart,end:slotEnd,text,type:"class",id:`${dayName}-${session.start}`}, dayName, slotStart)}
                             >
                               <div className="block-top">

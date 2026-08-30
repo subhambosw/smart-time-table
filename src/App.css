@@ -339,28 +339,28 @@ body{
 .day-strip{display:flex;align-items:center;gap:3px;overflow-x:auto;scrollbar-width:none;}
 .day-strip::-webkit-scrollbar{display:none;}
 .dnav{
-  width:24px;height:24px;border-radius:7px;border:1px solid var(--border);
+  width:28px;height:36px;border-radius:8px;border:1px solid var(--border);
   background:var(--surface);color:var(--text3);display:flex;align-items:center;
   justify-content:center;cursor:pointer;flex-shrink:0;transition:all .12s;
 }
 .dnav:hover{background:var(--surface2);color:var(--text);}
 .dpill{
-  display:flex;flex-direction:column;align-items:center;
-  padding:4px 11px;border-radius:8px;border:1px solid var(--border);
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:6px 8px;border-radius:10px;border:1px solid var(--border);
   background:var(--surface);color:var(--text3);cursor:pointer;
-  transition:all .12s;font-size:10px;flex-shrink:0;gap:1px;
+  transition:all .12s;font-size:10px;gap:2px;min-width:0;
 }
 .dpill:hover{background:var(--surface2);color:var(--text);}
-.dpill-a{background:var(--surface2);color:var(--text);border-color:rgba(99,102,241,.3);}
-.dpill-name{font-weight:600;letter-spacing:.05em;}
-.dpill-num{font-size:13px;font-weight:700;}
+.dpill-a{background:var(--surface2);color:var(--text);border-color:rgba(99,102,241,.4);box-shadow:0 0 0 1px rgba(99,102,241,.2);}
+.dpill-name{font-weight:700;letter-spacing:.06em;}
+.dpill-num{font-size:15px;font-weight:700;}
 .dpill-today{color:var(--brand);}
 .today-btn{
-  margin-left:auto;padding:4px 10px;border-radius:8px;
+  padding:6px 12px;border-radius:8px;
   border:1px solid var(--border);background:var(--surface);
   color:var(--text3);font-size:11px;font-weight:500;
   cursor:pointer;flex-shrink:0;transition:all .12s;
-  display:flex;align-items:center;gap:4px;
+  display:flex;align-items:center;gap:4px;white-space:nowrap;
 }
 .today-btn:hover{background:var(--surface2);color:var(--text);}
 
@@ -425,12 +425,12 @@ body{
 /* class block card */
 .block-card{
   height:100%;border-radius:8px;border-left:3px solid transparent;
-  background:var(--surface2);padding:6px 8px;
+  padding:6px 8px;
   cursor:pointer;transition:filter .12s,background .12s;
   display:flex;flex-direction:column;justify-content:center;
-  border-top:1px solid var(--border);
-  border-right:1px solid var(--border);
-  border-bottom:1px solid var(--border);
+  border-top:1px solid transparent;
+  border-right:1px solid transparent;
+  border-bottom:1px solid transparent;
 }
 .block-card:hover{filter:brightness(1.1);}
 .block-top{display:flex;align-items:flex-start;justify-content:space-between;gap:4px;}
