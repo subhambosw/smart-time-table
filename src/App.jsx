@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft, ChevronRight, LayoutGrid, AlignJustify,
   Sun, Moon, Monitor, Utensils, ArrowRight, CircleDot,
-  BookOpen, Clock, Search, Plus, PencilLine, Trash2, Check,
+  BookOpen, Clock, PencilLine,
 } from "lucide-react";
 import "./App.css";
 import { DAYS, SESSIONS as DEFAULT_SESSIONS, STUDENT_NAME } from "./data/timetable.js";
@@ -92,12 +92,7 @@ export default function App() {
   const [dayIdx, setDayIdx]   = useState(() => { const d = new Date().getDay() - 1; return d >= 0 && d <= 4 ? d : 4; });
   const [weekOffset, setWeekOffset] = useState(0);
   const [theme, setTheme]     = useState(() => localStorage.getItem("tt_theme") || "dark");
-  const [calY, setCalY]       = useState(() => new Date().getFullYear());
-  const [calM, setCalM]       = useState(() => new Date().getMonth());
   const [sel, setSel]         = useState(null);
-  const [todos, setTodos]     = useState(() => { try { return JSON.parse(localStorage.getItem("tt_todos") || "[]"); } catch { return []; } });
-  const [todoInput, setTodoInput] = useState("");
-  const [schedOpen, setSchedOpen] = useState(false);
   const [schedEdit, setSchedEdit] = useState(null); // {si, dayName}
   const dlg = useRef(null);
   const schedDlg = useRef(null);
@@ -119,7 +114,6 @@ export default function App() {
   /* persist */
   useEffect(() => { const s = localStorage.getItem("smartTimetable"); if (s) { try { setTt(JSON.parse(s)); } catch {} } }, []);
   useEffect(() => { localStorage.setItem("smartTimetable", JSON.stringify(tt)); }, [tt]);
-  useEffect(() => { localStorage.setItem("tt_todos", JSON.stringify(todos)); }, [todos]);
   // Clock ticks every 60 s so nowMins stays accurate.
   useEffect(() => { const id = setInterval(() => setNow(new Date()), 60000); return () => clearInterval(id); }, []);
 
@@ -135,8 +129,6 @@ export default function App() {
     const d = now.getDay() - 1; // -1=Sun, 0-4=Mon-Fri, 5=Sat
     setDayIdx(d >= 0 && d <= 4 ? d : 4);
     setWeekOffset(0);
-    setCalY(now.getFullYear());
-    setCalM(now.getMonth());
   }, [now]);
 
   /* keyboard */
@@ -167,7 +159,6 @@ export default function App() {
   // actual day name including weekends
   const ALL_DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   const todayDayName = ALL_DAYS[now.getDay()];
-  const calDays   = buildCal(calY, calM);
 
   /* month label for the day strip */
   const stripMonth = (() => {
@@ -216,136 +207,8 @@ export default function App() {
     setTt(prev => prev.map((r, i) => i === si ? { ...r, days: { ...r.days, [dayName]: val } } : r));
   };
 
-  /* calendar click: jump to that week + day */
-  const handleCalDayClick = (day) => {
-    if (!day) return;
-    const clicked = new Date(calY, calM, day);
-    const dow = clicked.getDay();
-    if (dow === 0 || dow === 6) return; // weekend
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    clicked.setHours(0,0,0,0);
-    const diffDays = Math.round((clicked - today) / 86400000);
-    const newOffset = Math.floor(diffDays / 7 + (diffDays < 0 && diffDays % 7 !== 0 ? 0 : 0));
-    // compute week offset properly
-    const todayMon = new Date(today);
-    const todayDow = today.getDay();
-    todayMon.setDate(today.getDate() - (todayDow === 0 ? 6 : todayDow - 1));
-    const clickedMon = new Date(clicked);
-    const clickedDow = clicked.getDay();
-    clickedMon.setDate(clicked.getDate() - (clickedDow === 0 ? 6 : clickedDow - 1));
-    const weekDiff = Math.round((clickedMon - todayMon) / (7 * 86400000));
-    setWeekOffset(weekDiff);
-    setDayIdx(dow - 1);
-  };
-
-  /* todo helpers */
-  const doAddTodo = () => {
-    if (!todoInput.trim()) return;
-    setTodos(prev => [...prev, { id: Date.now(), text: todoInput.trim(), done: false }]);
-    setTodoInput("");
-  };
-  const addTodo = (e) => { e.preventDefault(); doAddTodo(); };
-  const toggleTodo = (id) => setTodos(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
-  const deleteTodo = (id) => setTodos(prev => prev.filter(t => t.id !== id));
-
   return (
     <div className="app">
-      {/* ── SIDEBAR ──────────────────────────────────── */}
-      <aside className="sidebar">
-        {/* Mini Calendar */}
-        <div className="cal-header">
-          <span className="cal-title">{MONTH_NAMES[calM]} {calY}</span>
-          <div className="cal-nav">
-            <button onClick={() => { const d = new Date(calY, calM - 1, 1); setCalM(d.getMonth()); setCalY(d.getFullYear()); }}><ChevronLeft size={13}/></button>
-            <button onClick={() => { const d = new Date(calY, calM + 1, 1); setCalM(d.getMonth()); setCalY(d.getFullYear()); }}><ChevronRight size={13}/></button>
-          </div>
-        </div>
-        <div className="cal-grid">
-          {["S","M","T","W","T","F","S"].map((d, i) => <div key={i} className="cal-dow">{d}</div>)}
-          {calDays.map((d, i) => {
-            const td = new Date();
-            const isToday = d && calY === td.getFullYear() && calM === td.getMonth() && d === td.getDate();
-            const isSelected = (() => {
-              if (!d) return false;
-              const wd = weekDates[dayIdx];
-              return calY === wd.getFullYear() && calM === wd.getMonth() && d === wd.getDate();
-            })();
-            const clicked = d ? new Date(calY, calM, d) : null;
-            const dow = clicked?.getDay();
-            const isWeekend = dow === 0 || dow === 6;
-            return (
-              <div
-                key={i}
-                className={`cal-day ${d ? "cal-day-valid" : ""} ${isToday ? "cal-day-today" : ""} ${isSelected && !isToday ? "cal-day-selected" : ""} ${isWeekend && d ? "cal-day-weekend" : ""}`}
-                onClick={() => !isWeekend && handleCalDayClick(d)}
-                style={isWeekend && d ? { pointerEvents: "none" } : {}}
-              >
-                {d || ""}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Search */}
-        <div className="sb-search">
-          <Search size={13} className="sb-search-icon"/>
-          <input placeholder="Find calendar or room"/>
-        </div>
-
-        {/* My Calendars */}
-        <div className="sb-section">
-          <p className="sb-section-title">MY CALENDARS</p>
-          <div className="cal-legend">
-            <div className="cal-legend-item"><span className="cal-dot" style={{background:"#4f63f8"}}/> Timetable</div>
-            <div className="cal-legend-item"><span className="cal-dot" style={{background:"#4ade80"}}/> Free Slots</div>
-            <div className="cal-legend-item"><span className="cal-dot" style={{background:"#fbbf24"}}/> Exams</div>
-          </div>
-        </div>
-
-        {/* Todo List */}
-        <div className="sb-section todo-section">
-          <p className="sb-section-title">TODO LIST</p>
-          <form className="todo-form" onSubmit={addTodo}>
-            <input
-              className="todo-input"
-              value={todoInput}
-              onChange={e => setTodoInput(e.target.value)}
-              onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); doAddTodo(); } }}
-              placeholder="Add a task…"
-            />
-            <button
-              type="button"
-              className="todo-add-btn"
-              onClick={e => { e.stopPropagation(); doAddTodo(); }}
-            ><Plus size={13}/></button>
-          </form>
-          <ul className="todo-list">
-            <AnimatePresence>
-              {todos.length === 0 && (
-                <li className="todo-empty">No tasks yet. Add one above!</li>
-              )}
-              {todos.map(t => (
-                <motion.li
-                  key={t.id}
-                  className={`todo-item ${t.done ? "todo-done" : ""}`}
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.18 }}
-                >
-                  <button className="todo-check" onClick={() => toggleTodo(t.id)}>
-                    {t.done ? <Check size={10}/> : null}
-                  </button>
-                  <span className="todo-text">{t.text}</span>
-                  <button className="todo-del" onClick={() => deleteTodo(t.id)}><Trash2 size={10}/></button>
-                </motion.li>
-              ))}
-            </AnimatePresence>
-          </ul>
-        </div>
-      </aside>
-
       {/* ── MAIN ─────────────────────────────────────── */}
       <div className="main-wrap">
         {/* Topbar */}
