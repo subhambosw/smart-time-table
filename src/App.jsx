@@ -8,6 +8,10 @@ import {
 } from "lucide-react";
 import "./App.css";
 import { DAYS, SESSIONS as DEFAULT_SESSIONS, STUDENT_NAME } from "./data/timetable.js";
+
+/* ─── Timetable version: change this string whenever timetable.js is edited ─
+   This ensures stale localStorage from any device is discarded on redeploy.   */
+const TT_VERSION = JSON.stringify(DEFAULT_SESSIONS).length + "-" + DEFAULT_SESSIONS[0]?.start + "-" + DEFAULT_SESSIONS[DEFAULT_SESSIONS.length-1]?.end;
 import { toMinutes, getCurrentTimeMinutes } from "./lib/time.js";
 import { getNowState, getDaySchedule } from "./lib/schedule.js";
 
@@ -59,12 +63,17 @@ function getWeekDates(weekOffset = 0) {
 
 function getDayStats(di, tt) {
   const name=DAYS[di]; let cls=0,mins=0,lunch=null,free=0;
-  tt.forEach(r=>{ const t=r.days[name];
-    if(t===undefined) return;
-    if(!t){free++;return;} if(t==="Lunch"){lunch=r.start;return;}
-    cls++; mins+=toMinutes(r.end)-toMinutes(r.start);
+  tt.forEach(r=>{
+    const t = r.days[name];
+    // undefined = this day has no entry at all (shouldn't happen) — skip
+    if (t === undefined) return;
+    // empty string = explicitly free slot
+    if (t === "") { free++; return; }
+    if (t === "Lunch") { lunch = r.start; return; }
+    cls++;
+    mins += toMinutes(r.end) - toMinutes(r.start);
   });
-  return {cls,mins,lunch,free};
+  return {cls, mins, lunch, free};
 }
 
 function buildCal(y, m) {
@@ -101,7 +110,8 @@ export default function App() {
   });
   const [theme, setTheme]     = useState(() => localStorage.getItem("tt_theme") || "dark");
   const [sel, setSel]         = useState(null);
-  const [schedEdit, setSchedEdit] = useState(null); // {si, dayName}
+  const [schedOpen, setSchedOpen] = useState(false); // controls schedule editor dialog
+  const [schedEdit, setSchedEdit] = useState(null);  // {si, dayName} — which cell is being edited
   const dlg = useRef(null);
   const schedDlg = useRef(null);
   // Track the last known date-string so midnight detection only fires on genuine day changes.
@@ -119,9 +129,26 @@ export default function App() {
     mq.addEventListener("change", h); return () => mq.removeEventListener("change", h);
   }, [theme]);
 
-  /* persist */
-  useEffect(() => { const s = localStorage.getItem("smartTimetable"); if (s) { try { setTt(JSON.parse(s)); } catch {} } }, []);
-  useEffect(() => { localStorage.setItem("smartTimetable", JSON.stringify(tt)); }, [tt]);
+  /* ── persist: version-guarded localStorage ──────────────────────
+     If the stored version key matches TT_VERSION we load the user's
+     saved edits.  If it doesn't (new deploy with changed timetable.js)
+     we discard the stale data so the new canonical schedule shows up
+     on every device automatically.                                    */
+  useEffect(() => {
+    const storedVer = localStorage.getItem("tt_version");
+    if (storedVer === TT_VERSION) {
+      const s = localStorage.getItem("smartTimetable");
+      if (s) { try { setTt(JSON.parse(s)); } catch {} }
+    } else {
+      // New deploy — clear stale data, start from canonical timetable.js
+      localStorage.removeItem("smartTimetable");
+      localStorage.setItem("tt_version", TT_VERSION);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    localStorage.setItem("smartTimetable", JSON.stringify(tt));
+    localStorage.setItem("tt_version", TT_VERSION);
+  }, [tt]);
   // Clock ticks every 60 s so nowMins stays accurate.
   useEffect(() => { const id = setInterval(() => setNow(new Date()), 60000); return () => clearInterval(id); }, []);
 
@@ -290,10 +317,10 @@ export default function App() {
             <p className="section-lbl">{todayDayName.toUpperCase()} AT A GLANCE</p>
             <div className="stats-grid">
               {[
-                {icon:<BookOpen size={11}/>, lbl:"CLASSES",    val:todayStats.cls},
-                {icon:<Clock size={11}/>,    lbl:"CLASS TIME", val:todayStats.mins > 0 ? fmtMins(todayStats.mins) : "—"},
-                {icon:<CircleDot size={11}/>, lbl:"FREE", val:todayStats.free > 0 ? `${todayStats.free} slot${todayStats.free > 1 ? "s" : ""}` : "None"},
-                {icon:<Utensils size={11}/>, lbl:"LUNCH",      val:todayStats.lunch||"—"},
+                {icon:<BookOpen size={11}/>, lbl:"CLASSES",    val: todayIdx >= 0 && todayIdx <= 4 ? todayStats.cls : "—"},
+                {icon:<Clock size={11}/>,    lbl:"CLASS TIME", val: todayIdx >= 0 && todayIdx <= 4 && todayStats.mins > 0 ? fmtMins(todayStats.mins) : "—"},
+                {icon:<CircleDot size={11}/>, lbl:"FREE",      val: todayIdx >= 0 && todayIdx <= 4 ? (todayStats.free > 0 ? `${todayStats.free} slot${todayStats.free > 1 ? "s" : ""}` : "None") : "—"},
+                {icon:<Utensils size={11}/>, lbl:"LUNCH",      val: todayIdx >= 0 && todayIdx <= 4 ? (todayStats.lunch || "—") : "—"},
               ].map(s => (
                 <div key={s.lbl} className="stat-card">
                   <div className="stat-icon">{s.icon}</div>
