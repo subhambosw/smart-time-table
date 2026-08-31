@@ -9,9 +9,10 @@ import {
 import "./App.css";
 import { DAYS, SESSIONS as DEFAULT_SESSIONS, STUDENT_NAME } from "./data/timetable.js";
 
-/* ─── Timetable version: change this string whenever timetable.js is edited ─
-   This ensures stale localStorage from any device is discarded on redeploy.   */
-const TT_VERSION = JSON.stringify(DEFAULT_SESSIONS).length + "-" + DEFAULT_SESSIONS[0]?.start + "-" + DEFAULT_SESSIONS[DEFAULT_SESSIONS.length-1]?.end;
+/* ─── Timetable version: bump this manually whenever you want all devices
+   to drop their locally-saved edits and reload from timetable.js.
+   Current: v3  (bumped 2026-08-31 to force reset of stale CyberSecurity data) */
+const TT_VERSION = "v3";
 import { toMinutes, getCurrentTimeMinutes } from "./lib/time.js";
 import { getNowState, getDaySchedule } from "./lib/schedule.js";
 
