@@ -47,11 +47,10 @@ const greet = (h) => {
 const fmtMins = (t) => { const h = Math.floor(t/60), m = t%60; return m ? `${h}h ${m}m` : `${h}h`; };
 const fmt12 = (m) => { const h=Math.floor(m/60), mm=m%60, hh=h>12?h-12:h||12, ap=h>=12?"PM":"AM"; return `${hh}:${mm.toString().padStart(2,"0")} ${ap}`; };
 
-const COLORS = {
+const DEFAULT_COLORS = {
   WebDev:"#f9a8d4", Nand:"#f87171", ML:"#a78bfa", DBMS:"#4ade80",
   DSA:"#fbbf24", Coding:"#22d3ee", Community:"#c084fc", Verbal:"#fb923c",
 };
-const subjectColor = (t) => { const k=Object.keys(COLORS).find(k=>t?.startsWith(k)); return k?COLORS[k]:"#94a3b8"; };
 
 function getWeekDates(weekOffset = 0) {
   const now = new Date();
@@ -113,10 +112,18 @@ export default function App() {
   const [sel, setSel]         = useState(null);
   const [schedOpen, setSchedOpen] = useState(false); // controls schedule editor dialog
   const [schedEdit, setSchedEdit] = useState(null);  // {si, dayName} — which cell is being edited
+  const [colors, setColors]   = useState(() => {
+    try { const s = localStorage.getItem("tt_colors"); return s ? JSON.parse(s) : DEFAULT_COLORS; } catch { return DEFAULT_COLORS; }
+  });
+  const [newColorName, setNewColorName] = useState("");
+  const [newColorHex, setNewColorHex]   = useState("#4f63f8");
   const dlg = useRef(null);
   const schedDlg = useRef(null);
   // Track the last known date-string so midnight detection only fires on genuine day changes.
   const prevDateStrRef = useRef(new Date().toDateString());
+
+  /* derived color helper — must be inside App so it picks up `colors` state */
+  const subjectColor = (t) => { const k = Object.keys(colors).find(k => t?.startsWith(k)); return k ? colors[k] : "#94a3b8"; };
 
   /* theme */
   useEffect(() => {
@@ -150,6 +157,7 @@ export default function App() {
     localStorage.setItem("smartTimetable", JSON.stringify(tt));
     localStorage.setItem("tt_version", TT_VERSION);
   }, [tt]);
+  useEffect(() => { localStorage.setItem("tt_colors", JSON.stringify(colors)); }, [colors]);
   // Clock ticks every 60 s so nowMins stays accurate.
   useEffect(() => { const id = setInterval(() => setNow(new Date()), 60000); return () => clearInterval(id); }, []);
 
@@ -242,6 +250,17 @@ export default function App() {
   const closeSchedEditor = () => { setSchedOpen(false); schedDlg.current?.close(); };
   const saveSchedCell = (si, dayName, val) => {
     setTt(prev => prev.map((r, i) => i === si ? { ...r, days: { ...r.days, [dayName]: val } } : r));
+  };
+
+  /* color manager */
+  const updateColor   = (key, hex) => setColors(prev => ({ ...prev, [key]: hex }));
+  const deleteColor   = (key) => setColors(prev => { const n = { ...prev }; delete n[key]; return n; });
+  const addColor = () => {
+    const k = newColorName.trim();
+    if (!k) return;
+    setColors(prev => ({ ...prev, [k]: newColorHex }));
+    setNewColorName("");
+    setNewColorHex("#4f63f8");
   };
 
   return (
@@ -533,6 +552,58 @@ export default function App() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* ── Subject Colors Section ─────────────────── */}
+          <div className="sched-colors-section">
+            <div className="sched-colors-header">
+              <span className="sched-colors-title">Subject Colors</span>
+              <span className="sched-colors-hint">Color is matched by subject name prefix</span>
+            </div>
+
+            <div className="sched-colors-grid">
+              {Object.entries(colors).map(([key, hex]) => (
+                <div key={key} className="color-row">
+                  <div className="color-swatch-wrap">
+                    <input
+                      type="color"
+                      className="color-picker"
+                      value={hex}
+                      onChange={e => updateColor(key, e.target.value)}
+                      title={`Pick color for ${key}`}
+                    />
+                    <span className="color-dot" style={{ background: hex }}/>
+                  </div>
+                  <span className="color-key">{key}</span>
+                  <span className="color-hex">{hex}</span>
+                  <button className="color-del-btn" onClick={() => deleteColor(key)} title="Remove">
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Add new color */}
+            <div className="color-add-row">
+              <input
+                className="sched-cell-input color-add-name"
+                placeholder="Subject prefix (e.g. ML)"
+                value={newColorName}
+                onChange={e => setNewColorName(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && addColor()}
+              />
+              <div className="color-swatch-wrap">
+                <input
+                  type="color"
+                  className="color-picker"
+                  value={newColorHex}
+                  onChange={e => setNewColorHex(e.target.value)}
+                  title="Pick new color"
+                />
+                <span className="color-dot" style={{ background: newColorHex }}/>
+              </div>
+              <button className="btn-save color-add-btn" onClick={addColor}>+ Add</button>
+            </div>
           </div>
 
           <div className="sched-footer">

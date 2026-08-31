@@ -605,3 +605,78 @@ dialog::backdrop{background:rgba(0,0,0,.55);backdrop-filter:blur(4px);}
   display:flex;justify-content:flex-end;gap:8px;
   padding:14px 24px;border-top:1px solid var(--border);flex-shrink:0;
 }
+
+/* ── SUBJECT COLORS SECTION ───────────────────────── */
+.sched-colors-section{
+  flex-shrink:0;
+  border-top:1px solid var(--border);
+  padding:16px 24px 18px;
+}
+.sched-colors-header{
+  display:flex;align-items:baseline;gap:10px;margin-bottom:12px;
+}
+.sched-colors-title{
+  font-size:13px;font-weight:700;color:var(--text);
+}
+.sched-colors-hint{
+  font-size:11px;color:var(--text3);
+}
+
+.sched-colors-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+  gap:6px;
+  margin-bottom:12px;
+}
+
+/* one color entry row */
+.color-row{
+  display:flex;align-items:center;gap:8px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:9px;padding:7px 10px;
+  transition:background .12s;
+}
+.color-row:hover{ background:var(--surface3); }
+
+/* color swatch — overlays native picker */
+.color-swatch-wrap{
+  position:relative;width:24px;height:24px;flex-shrink:0;cursor:pointer;
+}
+.color-picker{
+  position:absolute;inset:0;opacity:0;width:100%;height:100%;
+  cursor:pointer;border:none;padding:0;
+}
+.color-dot{
+  width:24px;height:24px;border-radius:6px;
+  border:1.5px solid rgba(255,255,255,.15);
+  display:block;pointer-events:none;
+  box-shadow:0 1px 4px rgba(0,0,0,.25);
+}
+
+.color-key{
+  flex:1;font-size:12px;font-weight:600;color:var(--text);
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.color-hex{
+  font-size:10px;color:var(--text3);font-variant-numeric:tabular-nums;
+  font-family:monospace;flex-shrink:0;
+}
+.color-del-btn{
+  background:none;border:none;color:var(--text3);
+  cursor:pointer;font-size:12px;padding:2px 4px;
+  border-radius:4px;transition:color .12s,background .12s;
+  flex-shrink:0;line-height:1;
+}
+.color-del-btn:hover{ color:#f87171; background:rgba(248,113,113,.08); }
+
+/* add new row */
+.color-add-row{
+  display:flex;align-items:center;gap:8px;
+}
+.color-add-name{
+  flex:1;min-width:0;min-height:36px !important;
+  padding:6px 10px !important;
+}
+.color-add-btn{
+  padding:7px 16px !important;white-space:nowrap;flex-shrink:0;
+}
