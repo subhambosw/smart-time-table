@@ -422,7 +422,8 @@ export default function App() {
 
                         if (isFree) return (
                           <div key={dayName} className="grid-cell">
-                            <div className="cell-free">
+                            <div className="cell-free cell-clickable"
+                              onClick={() => openEdit({start:slotStart,end:slotEnd,text:"",type:"class",id:`${dayName}-${session.start}`}, dayName, slotStart)}>
                               <span className="free-icon">⊙</span>
                               <span className="free-text">Free</span>
                             </div>
@@ -430,7 +431,8 @@ export default function App() {
                         );
                         if (isLunch) return (
                           <div key={dayName} className="grid-cell">
-                            <div className="cell-lunch">
+                            <div className="cell-lunch cell-clickable"
+                              onClick={() => openEdit({start:slotStart,end:slotEnd,text:"Lunch",type:"lunch",id:`${dayName}-${session.start}`}, dayName, slotStart)}>
                               <Utensils size={12} style={{opacity:0.5}}/>
                               <span>Lunch</span>
                             </div>
