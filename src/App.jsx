@@ -482,19 +482,44 @@ export default function App() {
 
       {/* Edit dialog */}
       <dialog ref={dlg} className="edit-dialog">
-        {sel && (
-          <div className="edit-box">
-            <h2>Edit Session</h2>
-            <form onSubmit={saveEdit}>
-              <label>Class / Text</label>
-              <input name="text" defaultValue={sel.text} key={sel.id}/>
-              <div className="edit-actions">
-                <button type="button" onClick={() => dlg.current?.close()} className="btn-cancel">Cancel</button>
-                <button type="submit" className="btn-save">Save</button>
-              </div>
-            </form>
-          </div>
-        )}
+        {sel && (() => {
+          const colorKey = Object.keys(colors).find(k => sel.text?.startsWith(k)) || sel.text?.split(" ")[0] || "";
+          const currentColor = colors[colorKey] || "#94a3b8";
+          return (
+            <div className="edit-box">
+              <h2>Edit Session</h2>
+              <form onSubmit={saveEdit}>
+                <label>Class / Text</label>
+                <input name="text" defaultValue={sel.text} key={sel.id}/>
+
+                {/* ── Inline color picker ── */}
+                <label style={{marginTop:"14px"}}>Subject Color</label>
+                <div className="edit-color-row">
+                  <div className="color-swatch-wrap edit-swatch">
+                    <input
+                      type="color"
+                      className="color-picker"
+                      value={currentColor}
+                      onChange={e => updateColor(colorKey, e.target.value)}
+                      title={`Color for "${colorKey}"`}
+                    />
+                    <span className="color-dot edit-dot" style={{ background: currentColor }}/>
+                  </div>
+                  <div className="edit-color-info">
+                    <span className="edit-color-key">{colorKey}</span>
+                    <span className="edit-color-hint">Updates all {colorKey} blocks instantly</span>
+                  </div>
+                  <span className="edit-color-hex">{currentColor}</span>
+                </div>
+
+                <div className="edit-actions">
+                  <button type="button" onClick={() => dlg.current?.close()} className="btn-cancel">Cancel</button>
+                  <button type="submit" className="btn-save">Save</button>
+                </div>
+              </form>
+            </div>
+          );
+        })()}
       </dialog>
 
       {/* ── SCHEDULE EDITOR DIALOG ────────────────────── */}

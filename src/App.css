@@ -522,6 +522,24 @@ dialog::backdrop{background:rgba(0,0,0,.55);backdrop-filter:blur(4px);}
 }
 .edit-box input:focus{border-color:var(--brand);}
 .edit-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;}
+
+/* ── Inline color picker (Edit Session dialog) ── */
+.edit-color-row{
+  display:flex;align-items:center;gap:10px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;padding:10px 12px;margin-top:6px;
+}
+.edit-swatch{ width:32px;height:32px; }
+.edit-dot{ width:32px !important;height:32px !important;border-radius:8px !important; }
+.edit-color-info{
+  flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;
+}
+.edit-color-key{font-size:13px;font-weight:700;color:var(--text);}
+.edit-color-hint{font-size:10px;color:var(--text3);}
+.edit-color-hex{
+  font-size:10px;color:var(--text3);
+  font-family:monospace;flex-shrink:0;
+}
 .btn-cancel{
   padding:7px 14px;border-radius:8px;border:1px solid var(--border);
   background:var(--surface2);color:var(--text2);cursor:pointer;font-size:12px;
