@@ -257,19 +257,42 @@ body{
 .now-panel{
   display:grid;grid-template-columns:1fr auto 1fr;
   background:var(--surface);border:1px solid var(--border);
-  border-radius:12px;overflow:hidden;min-height:88px;
+  border-radius:12px;overflow:hidden;
 }
+/*
+  Each half uses a 3-row subgrid so SESSION and UP NEXT
+  always align at the same vertical positions:
+    Row 1 — label  (fixed, 18px)
+    Row 2 — value  (flexible, takes remaining space)
+    Row 3 — chip   (fixed, auto)
+*/
 .now-left,.now-right{
-  padding:16px 20px;display:flex;flex-direction:column;
-  justify-content:center;gap:5px;
+  padding:14px 20px 16px;
+  display:grid;
+  grid-template-rows:18px 1fr auto;
+  align-items:start;
+  gap:4px;
+  min-height:96px;
 }
-.now-divider{width:1px;background:var(--border);align-self:stretch;}
+/* Row 1 — labels always baseline-aligned */
 .now-label{
   font-size:10px;font-weight:600;letter-spacing:.1em;
   color:var(--text3);text-transform:uppercase;
   display:flex;align-items:center;gap:3px;
+  line-height:18px; /* matches row height */
 }
-.now-main{font-size:21px;font-weight:700;color:var(--text);letter-spacing:-.02em;line-height:1.2;}
+/* Row 2 — primary value */
+.now-main{
+  font-size:21px;font-weight:700;color:var(--text);
+  letter-spacing:-.02em;line-height:1.2;
+  align-self:center;
+}
+.now-next-name{
+  font-size:17px;font-weight:700;color:var(--text);
+  letter-spacing:-.01em;
+  align-self:center;
+}
+/* Row 3 — secondary text / chips */
 .now-sub{font-size:12px;color:var(--text3);}
 .now-chip{
   display:inline-flex;align-items:center;gap:4px;
@@ -277,17 +300,26 @@ body{
   border-radius:20px;padding:3px 9px;
   font-size:11px;color:var(--text2);width:fit-content;
 }
-.now-next-name{font-size:17px;font-weight:700;color:var(--text);letter-spacing:-.01em;}
 .now-next-chip{
   display:inline-flex;align-items:center;gap:5px;
   border:1px solid;border-radius:20px;padding:3px 9px;
   font-size:11px;font-weight:500;width:fit-content;
+  max-width:100%;overflow:hidden;
 }
 .now-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
-.now-time{color:var(--text3);font-weight:400;}
+.now-time{color:var(--text3);font-weight:400;white-space:nowrap;}
 .now-tomorrow{
   font-size:12px;font-weight:600;color:#f87171;
-  margin-top:2px; display:flex; align-items:center; gap:4px;
+  display:flex; align-items:center; gap:4px;
+}
+/* Vertical divider */
+.now-divider{width:1px;background:var(--border);align-self:stretch;}
+
+/* ── NOW PANEL — responsive mobile collapse ── */
+@media(max-width:520px){
+  .now-panel{grid-template-columns:1fr;}
+  .now-divider{width:auto;height:1px;}
+  .now-left,.now-right{min-height:80px;}
 }
 
 /* ── SECTION LABEL ────────────────────────────────── */

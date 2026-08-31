@@ -270,7 +270,7 @@ export default function App() {
               </div>
               <div className="now-divider"/>
               <div className="now-right">
-                <p className="now-label"><ArrowRight size={10} style={{display:"inline",marginRight:3}}/>UP NEXT</p>
+                <p className="now-label"><ArrowRight size={10}/>UP NEXT</p>
                 {upNext ? <>
                   <p className="now-next-name">{upNext.block.text.split(" ")[0]}</p>
                   {upNext.tomorrow
