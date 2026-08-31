@@ -493,7 +493,7 @@ export default function App() {
                 <input name="text" defaultValue={sel.text} key={sel.id}/>
 
                 {/* ── Inline color picker ── */}
-                <label style={{marginTop:"14px"}}>Subject Color</label>
+                <label style={{marginTop:"10px"}}>Subject Color</label>
                 <div className="edit-color-row">
                   <div className="color-swatch-wrap edit-swatch">
                     <input
@@ -506,10 +506,12 @@ export default function App() {
                     <span className="color-dot edit-dot" style={{ background: currentColor }}/>
                   </div>
                   <div className="edit-color-info">
-                    <span className="edit-color-key">{colorKey}</span>
-                    <span className="edit-color-hint">Updates all {colorKey} blocks instantly</span>
+                    <div className="edit-color-top">
+                      <span className="edit-color-key">{colorKey}</span>
+                      <span className="edit-color-hex">{currentColor}</span>
+                    </div>
+                    <span className="edit-color-hint">Applies to all {colorKey} blocks instantly</span>
                   </div>
-                  <span className="edit-color-hex">{currentColor}</span>
                 </div>
 
                 <div className="edit-actions">

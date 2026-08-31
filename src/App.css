@@ -511,31 +511,34 @@ dialog::backdrop{background:rgba(0,0,0,.55);backdrop-filter:blur(4px);}
 .edit-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);}
 .edit-box{
   background:var(--surface);border:1px solid var(--border);
-  border-radius:14px;padding:22px;width:360px;color:var(--text);
+  border-radius:14px;padding:20px;width:360px;color:var(--text);
 }
-.edit-box h2{font-size:16px;font-weight:600;margin-bottom:14px;}
-.edit-box label{font-size:11px;color:var(--text3);display:block;margin-bottom:5px;}
+.edit-box h2{font-size:16px;font-weight:600;margin-bottom:12px;}
+.edit-box label{font-size:11px;color:var(--text3);display:block;margin-bottom:4px;}
 .edit-box input{
   width:100%;background:var(--surface2);border:1px solid var(--border);
   border-radius:8px;padding:8px 10px;color:var(--text);
   font-size:13px;outline:none;transition:border-color .15s;
 }
 .edit-box input:focus{border-color:var(--brand);}
-.edit-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;}
+.edit-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;}
 
 /* ── Inline color picker (Edit Session dialog) ── */
 .edit-color-row{
   display:flex;align-items:center;gap:10px;
   background:var(--surface2);border:1px solid var(--border);
-  border-radius:10px;padding:10px 12px;margin-top:6px;
+  border-radius:10px;padding:9px 11px;margin-top:5px;
 }
-.edit-swatch{ width:32px;height:32px; }
+.edit-swatch{ width:32px;height:32px;flex-shrink:0; }
 .edit-dot{ width:32px !important;height:32px !important;border-radius:8px !important; }
 .edit-color-info{
   flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;
 }
+.edit-color-top{
+  display:flex;align-items:center;justify-content:space-between;gap:6px;
+}
 .edit-color-key{font-size:13px;font-weight:700;color:var(--text);}
-.edit-color-hint{font-size:10px;color:var(--text3);}
+.edit-color-hint{font-size:10px;color:var(--text3);line-height:1.3;}
 .edit-color-hex{
   font-size:10px;color:var(--text3);
   font-family:monospace;flex-shrink:0;
