@@ -12,9 +12,10 @@ import { DAYS, SESSIONS as DEFAULT_SESSIONS, STUDENT_NAME } from "./data/timetab
 /* ─── Timetable version: bump this manually whenever you want all devices
    to drop their locally-saved edits and reload from timetable.js.
    Current: v3  (bumped 2026-08-31 to force reset of stale CyberSecurity data) */
-const TT_VERSION = "v3";
+const TT_VERSION = "v4";
 import { toMinutes, getCurrentTimeMinutes } from "./lib/time.js";
 import { getNowState, getDaySchedule } from "./lib/schedule.js";
+import { loadCloud, saveCloud } from "./lib/sync.js";
 
 /* ─── helpers ─────────────────────────────────────────────────── */
 const GREETINGS = {
@@ -158,6 +159,30 @@ export default function App() {
     localStorage.setItem("tt_version", TT_VERSION);
   }, [tt]);
   useEffect(() => { localStorage.setItem("tt_colors", JSON.stringify(colors)); }, [colors]);
+
+  /* ── cloud sync: load from JSONBin on mount (cloud wins) ─────────
+     Runs once after mount. If the cloud has a saved timetable it
+     replaces the localStorage-seeded state so all devices stay in sync. */
+  useEffect(() => {
+    loadCloud()
+      .then(data => {
+        if (data?.timetable?.length)                        setTt(data.timetable);
+        if (data?.colors && Object.keys(data.colors).length) setColors(data.colors);
+      })
+      .catch(() => { /* network unavailable — silently use localStorage cache */ });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* ── cloud sync: debounced save on every tt / colors change ──────
+     Waits 1.5 s after the last change before writing to JSONBin so
+     rapid edits don't spam the API. localStorage is updated instantly
+     (above) so the UI is always snappy. */
+  useEffect(() => {
+    const t = setTimeout(() => {
+      saveCloud({ timetable: tt, colors }).catch(() => {});
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [tt, colors]);
+
   // Clock ticks every 60 s so nowMins stays accurate.
   useEffect(() => { const id = setInterval(() => setNow(new Date()), 60000); return () => clearInterval(id); }, []);
 
